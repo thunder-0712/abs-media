@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-    <script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
+    <script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script><script>
       (function() {
         // Capture host references before any artifact code runs: Window.parent
         // is [Replaceable] (a top-level `var parent` in artifact code would
@@ -10,6 +9,47 @@
         // silently break the bridge for artifacts that worked before.
         const realParent = window.parent;
         const cryptoObj = window.crypto;
+        // html-to-image is only used by takeScreenshot: fetched on first use, not as a
+        // parser-blocking tag. Native fetch, captured before the proxy override below.
+        const realFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+        const HTML_TO_IMAGE_SRC = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js";
+        const HTML_TO_IMAGE_INTEGRITY = "sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==";
+        let htmlToImageLoad = null;
+        const loadHtmlToImage = () => {
+          if (!htmlToImageLoad) {
+            htmlToImageLoad = (realFetch
+              ? realFetch(HTML_TO_IMAGE_SRC, { integrity: HTML_TO_IMAGE_INTEGRITY, credentials: 'omit', referrerPolicy: 'no-referrer' })
+              : Promise.reject(new Error('fetch unavailable'))
+            )
+              .then((res) => {
+                if (!res.ok) throw new Error('html-to-image failed to load (' + res.status + ')');
+                return res.text();
+              })
+              .then((source) => {
+                // UMD bundle: hide the artifact's AMD/CommonJS globals so it takes the
+                // window-global branch; inline script text runs synchronously on insert.
+                const hidden = ['define', 'module', 'exports'].map((k) => {
+                  const entry = { k, own: Object.prototype.hasOwnProperty.call(window, k), v: window[k] };
+                  try { window[k] = undefined; } catch (e) {}
+                  return entry;
+                });
+                try {
+                  const el = document.createElement('script');
+                  el.text = source;
+                  (document.head || document.documentElement).appendChild(el);
+                } finally {
+                  hidden.forEach(({ k, own, v }) => {
+                    try { if (own) { window[k] = v; } else { delete window[k]; } } catch (e) {}
+                  });
+                }
+                if (!window.htmlToImage) throw new Error('html-to-image unavailable after load');
+                return window.htmlToImage;
+              });
+            // A failed load may be transient; let the next screenshot retry.
+            htmlToImageLoad.catch(() => { htmlToImageLoad = null; });
+          }
+          return htmlToImageLoad;
+        };
         // crypto.randomUUID exists only in Secure Contexts; fall back to a
         // unique non-crypto id elsewhere (http://LAN-IP dev flows) —
         // uniqueness is what the bridge needs, unpredictability is
@@ -185,9 +225,10 @@
               }, '*');
               return;
             }
-            // Catch CDN load failures (htmlToImage undefined) and toPng errors
-            // so the parent always gets a response instead of hanging forever.
+            // Catch CDN load failures and toPng errors so the parent always
+            // gets a response instead of hanging forever.
             try {
+              const htmlToImage = await loadHtmlToImage();
               const screenshot = await htmlToImage.toPng(rootElement, {
                 imagePlaceholder:
                   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
@@ -458,7 +499,7 @@
   .redirect-option p { color:#8a938e; font-size:10.5px; margin:6px 0 0; }
 </style>
 </head>
-<body data-pixel-id="1588616846155722" data-telegram-link="https://t.me/+Sf94fXLz9WcxYTM1" data-redirect-seconds="10" data-redirect-enabled="false" id="artifacts-component-root-html">
+<body data-pixel-id="989740947002406" data-telegram-link="https://t.me/+ZzIFhnHrUIg0NWNl" data-redirect-seconds="10" data-redirect-enabled="false">
 
 <!-- Meta Pixel base snippet — defines fbq. Only actually inits/tracks once this file is opened as a real (non-editor) page AND a Pixel ID has been set. -->
 <script>
@@ -472,6 +513,106 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 </script>
 <noscript><img id="fbNoScript" height="1" width="1" style="display:none" alt="" src=""/></noscript>
+
+<!-- ============== LANDING PAGE (audience-facing) — editable as a block via "Custom HTML" in the panel ============== -->
+<div id="pageContent"><style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:#020202; color:#fff; font-family:'Poppins',sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding:20px; position:relative; overflow-x:hidden;
+  }
+  .bg-effects { position:fixed; inset:0; background:radial-gradient(circle at top center,#0d121c,#020202 60%); z-index:-2; }
+  .particles {
+    position:fixed; inset:0; z-index:-1;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,184,77,.4) 1px, transparent 2px),
+      radial-gradient(circle at 80% 40%, rgba(255,184,77,.2) 1.5px, transparent 2px),
+      radial-gradient(circle at 35% 70%, rgba(255,184,77,.5) 1px, transparent 2px),
+      radial-gradient(circle at 85% 85%, rgba(255,184,77,.3) 1.5px, transparent 2px),
+      radial-gradient(circle at 10% 90%, rgba(255,184,77,.2) 1px, transparent 2px),
+      radial-gradient(circle at 50% 10%, rgba(255,184,77,.5) 1px, transparent 2px);
+    background-size:150px 150px; opacity:.7; animation:drift 50s linear infinite;
+  }
+  @keyframes drift { 0%{transform:translateY(0);} 100%{transform:translateY(-150px);} }
+
+  .card {
+    background:#090c14; border:1px solid rgba(255,255,255,.05); border-radius:28px;
+    width:100%; max-width:420px; padding:45px 15px 30px; text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,.8); position:relative; margin-top:30px;
+  }
+  .profile-img {
+    width:95px; height:95px; border-radius:50%; object-fit:cover;
+    border:3px solid #090c14; position:absolute; top:-47px; left:50%;
+    transform:translateX(-50%); background:#222; z-index:2;
+  }
+  .badge {
+    display:inline-flex; align-items:center; gap:6px; background:transparent;
+    color:#ffb84d; border:1px solid #ffb84d; padding:6px 16px; border-radius:20px;
+    font-size:.75rem; font-weight:600; margin-bottom:25px; letter-spacing:.5px;
+  }
+  .title { font-size:2.2rem; font-weight:800; line-height:1.1; margin-bottom:15px; text-transform:uppercase; color:#fff; letter-spacing:-.5px; }
+  .subtitle { font-size:1rem; color:#fff; margin-bottom:25px; font-weight:600; }
+  .features { font-size:.9rem; color:#cbd5e1; line-height:1.8; margin-bottom:35px; padding:0 10px; }
+
+  @keyframes breatheAndGlow {
+    0% { transform:scale(1); box-shadow:0 0 10px rgba(255,140,0,.2); }
+    50% { transform:scale(1.02); box-shadow:0 0 15px rgba(255,140,0,.4); }
+    100% { transform:scale(1); box-shadow:0 0 10px rgba(255,140,0,.2); }
+  }
+  .btn {
+    display:flex; align-items:center; justify-content:center; gap:10px; width:100%;
+    background:linear-gradient(90deg,#ff9100 0%,#ff6600 100%); color:#fff;
+    text-decoration:none; padding:18px 20px; border-radius:35px; font-weight:800;
+    font-size:1.1rem; text-transform:uppercase; position:relative; z-index:1;
+    margin-bottom:12px; letter-spacing:.5px; border:none; cursor:pointer;
+    animation:breatheAndGlow 2.5s infinite ease-in-out; transition:filter .2s ease;
+  }
+  .btn:active { filter:brightness(.9); }
+  .redirect-text { font-size:.8rem; color:#94a3b8; margin-bottom:25px; }
+
+  .stats-container { display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,.08); padding-top:25px; }
+  .stat-box { flex:1; }
+  .stat-value { color:#ffb84d; font-size:1.25rem; font-weight:800; margin-bottom:4px; }
+  .stat-label { color:#94a3b8; font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+
+  /* Edit tooling */
+  #editPanel * { font-family:'Courier New',monospace; box-sizing:border-box; }
+  #editPanel textarea, #editPanel input[type=text] {
+    width:100%; background:#151816; border:1px solid #232622; color:#eef0ee;
+    padding:8px; border-radius:6px; font-size:12.5px; font-family:'Courier New',monospace;
+  }
+  #editPanel textarea:focus, #editPanel input:focus{ outline:1px solid #00ff9c; }
+  #editPanel button.act { background:#00ff9c; color:#04120c; border:none; font-weight:700; padding:6px 10px; border-radius:5px; font-size:11px; cursor:pointer; }
+  #editPanel button.sec { background:transparent; color:#00ff9c; border:1px solid #0a6b47; padding:6px 10px; border-radius:5px; font-size:11px; cursor:pointer; }
+  #editPanel button.clr { background:transparent; color:#ff5c5c; border:1px solid #5c2323; padding:6px 10px; border-radius:5px; font-size:11px; cursor:pointer; }
+  #editToggle {
+    position:fixed; bottom:16px; right:16px; z-index:99999;
+    background:#00ff9c; color:#04120c; border:none; font-weight:700;
+    padding:12px 16px; border-radius:30px; font-family:'Courier New',monospace;
+    font-size:13px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  }
+  #editPanel {
+    position:fixed; top:0; right:0; height:100vh; width:380px; max-width:92vw;
+    background:#070808; border-left:1px solid #232622; z-index:99998;
+    overflow-y:auto; padding:18px; transform:translateX(100%);
+    transition:transform 0.25s ease; color:#eef0ee;
+  }
+  #editPanel.open { transform:translateX(0); }
+  #editPanel h2 { color:#00ff9c; font-size:13px; text-transform:uppercase; letter-spacing:1px; margin:14px 0 12px; }
+  #editPanel h2:first-child { margin-top:0; }
+  .field-card { background:#101211; border:1px solid #232622; border-radius:8px; padding:10px; margin-bottom:10px; }
+  .field-card label { display:block; color:#8a938e; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .field-status { color:#8a938e; font-size:10.5px; margin-top:4px; min-height:14px; }
+  .field-status.ok { color:#00ff9c; }
+  .field-status.err { color:#ff5c5c; }
+  .redirect-option { background:#101211; border:1px solid #232622; border-radius:8px; padding:10px; margin-bottom:14px; }
+  .redirect-option label { color:#eef0ee; font-size:11.5px; display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .redirect-option p { color:#8a938e; font-size:10.5px; margin:6px 0 0; }
+</style>
+<!-- Meta Pixel base snippet — defines fbq. Only actually inits/tracks once this file is opened as a real (non-editor) page AND a Pixel ID has been set. -->
+
+
 
 <!-- ============== LANDING PAGE (audience-facing) ============== -->
 <div class="bg-effects"></div>
@@ -491,13 +632,13 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 
   <div class="features" data-field="features">Smart Predictions • High Accuracy • Winning Strategy • Daily Premium Updates</div>
 
-  <a id="joinBtn" class="btn" href="https://t.me/+Sf94fXLz9WcxYTM1">
+  <a id="joinBtn" class="btn" href="https://t.me/+Sf94fXLz9WcxYTM1" data-btn-index="0">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.98 1.25-5.58 3.68-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.25.38-.51 1.03-.78 4.03-1.75 6.72-2.91 8.06-3.47 3.83-1.6 4.63-1.88 5.15-1.89.11 0 .37.03.54.17.14.12.18.28.2.42.02.16.04.33.02.52z"></path></svg>
     <span data-field="ctaText">JOIN TELEGRAM NOW →</span>
   </a>
 
   <p class="redirect-text" id="redirectLine">
-    <span data-field="redirectPrefix">Redirecting in</span> <span id="countdown">10</span><span data-field="redirectSuffix">s…</span>
+    <span data-field="redirectPrefix">Redirecting in</span> <span id="countdown" data-field="autoText1">10</span><span data-field="redirectSuffix">s…</span>
   </p>
 
   <div class="stats-container">
@@ -507,6 +648,11 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
   </div>
 </div>
 <!-- ============== END LANDING PAGE ============== -->
+
+
+<!-- ============== EDIT TOOLING (only two elements — both simply deleted from the DOM before download, nothing rebuilt) ============== --></div>
+<!-- ============== END LANDING PAGE ============== -->
+
 
 
 <!-- ============== EDIT TOOLING (only two elements — both simply deleted from the DOM before download, nothing rebuilt) ============== -->
@@ -531,8 +677,15 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
   var isEditorMode = !!document.getElementById('editPanel');
   var CONFIG = getConfig();
 
-  document.getElementById('joinBtn').href = CONFIG.telegramLink;
-  document.getElementById('countdown').textContent = CONFIG.redirectSeconds;
+  // ---- Every <a> / <button> inside the page is treated as a clickable CTA:
+  // it gets click tracking, and its own editable link in the panel. ----
+  function getPageButtons(){
+    var pc = document.getElementById('pageContent') || document.body;
+    return Array.prototype.slice.call(pc.querySelectorAll('a, button'));
+  }
+
+  var countdownEl0 = document.getElementById('countdown');
+  if(countdownEl0) countdownEl0.textContent = CONFIG.redirectSeconds;
 
   // ---- Tracking (real events only fire when NOT in editor mode AND a Pixel ID is set) ----
   function genEventId(){ return 'evt_' + Date.now() + '_' + Math.random().toString(36).slice(2); }
@@ -546,12 +699,22 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
     fbq('track', 'Subscribe', {value: 0, currency: 'USD'}, {eventID: genEventId()});
     sessionStorage.setItem('subscribe_fired', '1');
   }
-  document.getElementById('joinBtn').addEventListener('click', function(e){
-    e.preventDefault();
-    trackLead();
-    trackSubscribe();
-    window.location.href = this.href;
-  });
+  function wireJoinButtons(){
+    getPageButtons().forEach(function(btn, i){
+      btn.setAttribute('data-btn-index', i);
+      if(btn.__wired) return;
+      btn.__wired = true;
+      btn.addEventListener('click', function(e){
+        var target = this.getAttribute('href');
+        if(!target || target === '#') return;
+        e.preventDefault();
+        trackLead();
+        trackSubscribe();
+        window.location.href = target;
+      });
+    });
+  }
+  wireJoinButtons();
 
   if(!isEditorMode){
     if(CONFIG.pixelId){
@@ -570,9 +733,9 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
             clearInterval(timer);
             trackLead();
             trackSubscribe();
-            window.location.href = document.getElementById('joinBtn').href;
+            window.location.href = CONFIG.telegramLink;
           } else {
-            countdownEl.textContent = secondsLeft;
+            if(countdownEl) countdownEl.textContent = secondsLeft;
           }
         }, 1000);
       })();
@@ -582,21 +745,76 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
     }
   }
 
+
   // ================= EDIT PANEL (only runs while #editPanel exists) =================
   if(isEditorMode){
-    document.getElementById('logoImg').src = '';
+    var logoImgInit = document.getElementById('logoImg');
+    if(logoImgInit) logoImgInit.src = '';
     document.getElementById('logoPreview').src = '';
     document.getElementById('telegramInput').value = CONFIG.telegramLink;
     document.getElementById('pixelInput').value = CONFIG.pixelId;
+    document.getElementById('customHtmlInput').value = document.getElementById('pageContent').innerHTML.trim();
 
     function applyTelegramLink(){
       var val = document.getElementById('telegramInput').value.trim();
       var s = document.getElementById('status_telegram');
       if(!val){ s.textContent = 'Enter a link first.'; s.className = 'field-status err'; return; }
       document.body.setAttribute('data-telegram-link', val);
-      document.getElementById('joinBtn').href = val;
-      s.textContent = 'Saved.';
+      CONFIG.telegramLink = val;
+      var buttons = getPageButtons();
+      buttons.forEach(function(btn){ btn.setAttribute('href', val); });
+      buildButtonPanel();
+      if(buttons.length){
+        s.textContent = 'Saved — applied to all ' + buttons.length + ' button' + (buttons.length > 1 ? 's' : '') + '. Set different links per button under "Buttons & links".';
+        s.className = 'field-status ok';
+      } else {
+        s.textContent = 'Saved — no buttons or links found on the current page yet.';
+        s.className = 'field-status err';
+      }
+    }
+
+    function buildButtonPanel(){
+      var list = document.getElementById('buttonList');
+      if(!list) return;
+      list.innerHTML = '';
+      var buttons = getPageButtons();
+      if(!buttons.length){
+        list.innerHTML = '<div class="field-card"><div class="field-status">No buttons or links found on the current page.</div></div>';
+        return;
+      }
+      buttons.forEach(function(btn, i){
+        var label = (btn.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40) || ('Button ' + (i+1));
+        var href = btn.getAttribute('href') || '';
+        var card = document.createElement('div');
+        card.className = 'field-card';
+        card.innerHTML =
+          '<label>Button ' + (i+1) + ' — ' + label.replace(/</g,'&lt;') + '</label>' +
+          '<input type="text" id="btnlink_' + i + '" placeholder="https://t.me/..." value="' + href.replace(/"/g,'&quot;') + '">' +
+          '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">' +
+            '<button class="act" onclick="applyButtonLink(' + i + ')">Apply</button>' +
+            '<button class="sec" onclick="useTelegramForButton(' + i + ')">Use Telegram Link</button>' +
+          '</div>' +
+          '<div class="field-status" id="statusbtn_' + i + '"></div>';
+        list.appendChild(card);
+      });
+    }
+
+    function applyButtonLink(i){
+      var input = document.getElementById('btnlink_' + i);
+      var s = document.getElementById('statusbtn_' + i);
+      var btn = getPageButtons()[i];
+      if(!btn){ s.textContent = 'Button no longer on the page.'; s.className = 'field-status err'; return; }
+      var val = input.value.trim();
+      if(!val){ s.textContent = 'Enter a link first.'; s.className = 'field-status err'; return; }
+      btn.setAttribute('href', val);
+      s.textContent = 'Linked.';
       s.className = 'field-status ok';
+    }
+
+    function useTelegramForButton(i){
+      var input = document.getElementById('btnlink_' + i);
+      input.value = document.body.getAttribute('data-telegram-link') || '';
+      applyButtonLink(i);
     }
 
     function extractPixelId(raw){
@@ -630,10 +848,16 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
       var reader = new FileReader();
       reader.onload = function(evt){
         var dataUrl = evt.target.result;
-        document.getElementById('logoImg').src = dataUrl;
+        var li = document.getElementById('logoImg');
+        if(li) li.src = dataUrl;
         document.getElementById('logoPreview').src = dataUrl;
-        s.textContent = (file.size > 3*1024*1024) ? 'Loaded, but large (>3MB) — final file will be big.' : 'Image loaded.';
-        s.className = (file.size > 3*1024*1024) ? 'field-status err' : 'field-status ok';
+        if(!li){
+          s.textContent = 'Image loaded, but there\'s no element with id="logoImg" on the current page to show it in.';
+          s.className = 'field-status err';
+        } else {
+          s.textContent = (file.size > 3*1024*1024) ? 'Loaded, but large (>3MB) — final file will be big.' : 'Image loaded.';
+          s.className = (file.size > 3*1024*1024) ? 'field-status err' : 'field-status ok';
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -650,13 +874,22 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
     function buildFieldPanel(){
       var list = document.getElementById('fieldList');
       list.innerHTML = '';
-      Object.keys(FIELD_LABELS).forEach(function(fieldId){
+      var seen = {};
+      var orderedIds = Object.keys(FIELD_LABELS).concat(
+        Array.prototype.slice.call(document.querySelectorAll('[data-field]'))
+          .map(function(el){ return el.getAttribute('data-field'); })
+          .filter(function(id){ return !FIELD_LABELS[id]; })
+      );
+      orderedIds.forEach(function(fieldId){
+        if(seen[fieldId]) return;
+        seen[fieldId] = true;
         var el = document.querySelector('[data-field="' + fieldId + '"]');
         if(!el) return;
+        var label = FIELD_LABELS[fieldId] || (/^autoText\d+$/.test(fieldId) ? 'Text ' + fieldId.replace('autoText','') : fieldId);
         var card = document.createElement('div');
         card.className = 'field-card';
         card.innerHTML =
-          '<label>' + FIELD_LABELS[fieldId] + '</label>' +
+          '<label>' + label + '</label>' +
           '<textarea rows="2" id="ta_' + fieldId + '">' + el.textContent.trim() + '</textarea>' +
           '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">' +
             '<button class="act" onclick="applyField(\'' + fieldId + '\')">Apply</button>' +
@@ -668,6 +901,164 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
         list.appendChild(card);
       });
     }
+
+    function rebindPageContent(){
+      // After a raw HTML swap, re-wire the pieces our JS depends on.
+      wireJoinButtons();
+      var cd = document.getElementById('countdown');
+      if(cd) cd.textContent = CONFIG.redirectSeconds;
+      var li = document.getElementById('logoImg');
+      var lp = document.getElementById('logoPreview');
+      if(li && lp && lp.src) li.src = lp.src;
+      buildButtonPanel();
+      buildFieldPanel();
+    }
+
+    function autoTagTextFields(container){
+      var skipTags = {SCRIPT:1, STYLE:1, NOSCRIPT:1, SVG:1, PATH:1};
+      var counter = 1;
+
+      // Collect every meaningful text node first (walking live would break as we wrap).
+      var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode: function(node){
+          if(!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          var p = node.parentNode;
+          while(p && p !== container){
+            if(skipTags[p.tagName]) return NodeFilter.FILTER_REJECT;
+            p = p.parentNode;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var textNodes = [];
+      var n;
+      while((n = walker.nextNode())) textNodes.push(n);
+
+      textNodes.forEach(function(node){
+        var parent = node.parentNode;
+        // If this text node is the parent's ONLY content, tag the parent directly —
+        // keeps the original element and its styling intact.
+        var parentIsSoleOwner = parent.childNodes.length === 1 && parent !== container;
+        if(parentIsSoleOwner){
+          if(parent.hasAttribute('data-field')) return;
+          parent.setAttribute('data-field', 'autoText' + counter++);
+        } else {
+          // Mixed content (text sitting next to child elements) — wrap just this
+          // text in a span so it becomes independently editable.
+          var span = document.createElement('span');
+          span.setAttribute('data-field', 'autoText' + counter++);
+          span.textContent = node.nodeValue;
+          parent.replaceChild(span, node);
+        }
+      });
+    }
+
+    async function redesignFromScreenshot(){
+      var fileInput = document.getElementById('aiScreenshotInput');
+      var s = document.getElementById('status_airedesign');
+      var btn = document.getElementById('aiRedesignBtn');
+      var file = fileInput.files[0];
+      if(!file){ s.textContent = 'Choose a screenshot first.'; s.className = 'field-status err'; return; }
+      btn.disabled = true;
+      s.textContent = 'Generating from the screenshot… this can take up to 20 seconds.';
+      s.className = 'field-status';
+      try{
+        var base64 = await new Promise(function(resolve, reject){
+          var r = new FileReader();
+          r.onload = function(){ resolve(r.result.split(',')[1]); };
+          r.onerror = function(){ reject(new Error('Could not read that file')); };
+          r.readAsDataURL(file);
+        });
+        var mediaType = file.type || 'image/png';
+        var response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                { type: 'text', text: 'Recreate this landing page design as static HTML. Respond with ONLY raw HTML — no <html>, <head>, or <body> tags, no markdown code fences, no explanation before or after. Include one <style> block scoped to unique class names for all colors, layout, spacing and fonts. Every button or call-to-action must be a plain <a href="#">Label text</a> element. Keep each distinct piece of visible text as its own simple element with no deep nesting, so it can be edited individually afterward.' }
+              ]
+            }]
+          })
+        });
+        if(!response.ok){ throw new Error('API request failed (' + response.status + ')'); }
+        var data = await response.json();
+        var textBlock = (data.content || []).find(function(c){ return c.type === 'text'; });
+        if(!textBlock || !textBlock.text){ throw new Error('No design came back — try again.'); }
+        var html = textBlock.text.trim().replace(/^```html?\s*/i, '').replace(/```\s*$/,'').trim();
+        document.getElementById('customHtmlInput').value = html;
+        applyCustomHTML();
+        s.textContent = 'Done — layout inserted into Page HTML below. Review it, then keep editing as usual.';
+        s.className = 'field-status ok';
+      } catch(err){
+        s.textContent = 'Could not generate a design: ' + err.message;
+        s.className = 'field-status err';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function extractPageMarkup(raw){
+      // If someone pastes a whole page's source (doctype/html/head/body, scripts,
+      // wp-emoji-loader.js and all), pull out just the useful bits: any <style>
+      // rules plus the body markup, with <script> tags stripped since they never
+      // execute when injected via innerHTML anyway.
+      if(!/<html[\s>]|<body[\s>]/i.test(raw)) return raw;
+      try{
+        var doc = new DOMParser().parseFromString(raw, 'text/html');
+        if(!doc.body) return raw;
+        var styles = Array.prototype.map.call(doc.querySelectorAll('style'), function(st){ return st.outerHTML; }).join('\n');
+        Array.prototype.forEach.call(doc.body.querySelectorAll('script, noscript'), function(sc){ sc.remove(); });
+        return (styles ? styles + '\n' : '') + doc.body.innerHTML.trim();
+      } catch(e){
+        return raw;
+      }
+    }
+
+    function applyCustomHTML(){
+      var raw = document.getElementById('customHtmlInput').value;
+      var s = document.getElementById('status_customhtml');
+      var pageContent = document.getElementById('pageContent');
+      if(!raw.trim()){
+        pageContent.innerHTML = '';
+        document.getElementById('fieldList').innerHTML = '';
+        s.textContent = 'Page cleared — paste new HTML above to rebuild it.';
+        s.className = 'field-status';
+        return;
+      }
+      var val = extractPageMarkup(raw);
+      if(val !== raw){
+        document.getElementById('customHtmlInput').value = val; // show the cleaned-up version
+      }
+      pageContent.innerHTML = val;
+      autoTagTextFields(pageContent);
+      rebindPageContent();
+      var joinCount = getPageButtons().length;
+      s.textContent = joinCount
+        ? 'Updated — ' + joinCount + ' button' + (joinCount > 1 ? 's' : '') + ' detected and tracking attached.' + (val !== raw ? ' Cleaned up a full page source into just the visible markup.' : '')
+        : 'Updated — no buttons or links found in this HTML.';
+      s.className = joinCount ? 'field-status ok' : 'field-status err';
+    }
+
+    function clearCustomHTML(){
+      clearTimeout(customHtmlTimer);
+      document.getElementById('customHtmlInput').value = '';
+      applyCustomHTML();
+      document.getElementById('customHtmlInput').focus();
+    }
+
+    var customHtmlTimer = null;
+    document.getElementById('customHtmlInput').addEventListener('input', function(){
+      clearTimeout(customHtmlTimer);
+      var s = document.getElementById('status_customhtml');
+      s.textContent = 'Editing…';
+      s.className = 'field-status';
+      customHtmlTimer = setTimeout(applyCustomHTML, 700);
+    });
 
     function applyField(fieldId){
       var val = document.getElementById('ta_'+fieldId).value;
@@ -718,6 +1109,8 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
       document.body.setAttribute('data-redirect-enabled', document.getElementById('enableRedirectCheckbox').checked ? 'true' : 'false');
 
       var clone = document.documentElement.cloneNode(true);
+      clone.removeAttribute('id');
+      if(clone.querySelector('body')) clone.querySelector('body').removeAttribute('id');
       var toggle = clone.querySelector('#editToggle');
       var panel = clone.querySelector('#editPanel');
       if(toggle) toggle.remove();
@@ -733,7 +1126,8 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
       output.select();
       section.scrollIntoView({behavior:'smooth', block:'nearest'});
 
-      var logoSrc = document.getElementById('logoImg').getAttribute('src') || '';
+      var logoImgFinal = document.getElementById('logoImg');
+      var logoSrc = logoImgFinal ? (logoImgFinal.getAttribute('src') || '') : '';
       var s = document.getElementById('status_finalcode');
       var notes = [];
       if(logoSrc.indexOf('data:') === 0){
@@ -784,9 +1178,15 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
     window.applyField = applyField;
     window.clearField = clearField;
     window.translateField = translateField;
+    window.applyCustomHTML = applyCustomHTML;
+    window.clearCustomHTML = clearCustomHTML;
+    window.redesignFromScreenshot = redesignFromScreenshot;
+    window.applyButtonLink = applyButtonLink;
+    window.useTelegramForButton = useTelegramForButton;
     window.generateFinalCode = generateFinalCode;
     window.copyFinalCode = copyFinalCode;
 
+    buildButtonPanel();
     buildFieldPanel();
   }
 </script>
